@@ -1,0 +1,40 @@
+name: Build timeline PNG
+
+on:
+  push:
+    paths:
+      - "data/milestones.csv"
+      - ".github/workflows/generate_timeline.yml"
+      - "scripts/generate_timeline.py"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade matplotlib
+
+      - name: Generate timeline PNG
+        run: |
+          python scripts/generate_timeline.py             data/milestones.csv docs/timeline.png
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ $(git status --porcelain docs/timeline.png) ]]; then
+            git add docs/timeline.png
+            git commit -m "Auto-update timeline [skip ci]"
+            git push
+          fi
